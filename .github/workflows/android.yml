@@ -1,0 +1,126 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:  # Allows manual trigger
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js (v22 for Capacitor)
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'  # Capacitor requires >=22.0.0
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |     
+        # Try npm ci first, if fails, fallback to npm install 
+        npm ci || npm install
+    
+    - name: Build Next.js app
+      run: npm run build
+    
+    - name: Install Capacitor
+      run: |
+        # Update npm to latest
+        npm install -g npm@latest
+        # Install Capacitor with specific compatible versions
+        npm install @capacitor/cli@latest @capacitor/core@latest @capacitor/android@latest
+    
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+    
+    - name: Add Android platform
+      run: |
+        # Check if android folder exists
+        if [ ! -d "android" ]; then
+          npx cap add android
+        else
+          echo "Android platform already exists"
+        fi
+    
+    - name: Sync Android project
+      run: |
+        # Create or update capacitor.config.json for Next.js
+        if [ ! -f "capacitor.config.json" ]; then
+          echo '{
+            "appId": "com.example.app",
+            "appName": "MyApp",
+            "webDir": ".next",
+            "bundledWebRuntime": false,
+            "server": {
+              "androidScheme": "https"
+            }
+          }' > capacitor.config.json
+        fi
+        
+        # Ensure webDir is set correctly for Next.js
+        npx cap sync android
+
+    # 🔐 NEW: ADDED FOR SIGNING - Step 1: Create signing key and config
+    - name: Setup Android Signing
+      run: |
+        # Generate a debug keystore for signing (for testing purposes only)
+        keytool -genkeypair -v \
+          -keystore debug.keystore \
+          -alias androiddebugkey \
+          -keyalg RSA \
+          -keysize 2048 \
+          -validity 10000 \
+          -storepass android \
+          -keypass android \
+          -dname "CN=Android Debug, O=Android, C=US"
+        
+        # Move the keystore to the android/app/ directory
+        mv debug.keystore android/app/debug.keystore
+        
+        # Create a simple gradle.properties file in android directory
+        echo "RELEASE_STORE_FILE=debug.keystore" > android/gradle.properties
+        echo "RELEASE_STORE_PASSWORD=android" >> android/gradle.properties
+        echo "RELEASE_KEY_ALIAS=androiddebugkey" >> android/gradle.properties
+        echo "RELEASE_KEY_PASSWORD=android" >> android/gradle.properties
+     
+    # Fix AndroidX compatibility
+    - name: Configure AndroidX
+      run: |
+        # Create or update gradle.properties to enable AndroidX
+        echo "android.useAndroidX=true" >> android/gradle.properties
+        echo "android.enableJetifier=true" >> android/gradle.properties
+        echo "org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8" >> android/gradle.properties
+    
+
+    - name: Build Android APK
+      run: |
+        cd android
+        chmod +x gradlew
+        ./gradlew assembleRelease --no-daemon
+    
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-apk
+        path: android/app/build/outputs/apk/release/*.apk
+        retention-days: 7
+    
+    - name: Upload AAB artifact (optional, for Play Store)
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-aab
+        path: android/app/build/outputs/bundle/release/*.aab
+        retention-days: 7
