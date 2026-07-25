@@ -1,73 +1,94 @@
-# Welcome to your Lovable project
+# 🎵 Spotify Web Application
 
-## Project info
+A feature-rich, high-performance **Spotify Web Clone** built with **React**, **TypeScript**, **Tailwind CSS**, and **Vite**. Features intelligent music search, 5-tier official audio ranking, persistent queue playback, background next-track preloading, and a responsive dark-mode interface.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+[![Spotify Web App Preview](public/preview.png)](https://spotifyy-clonee.vercel.app/)
 
-## How can I edit this code?
+🔗 **Live Demo**: [https://spotifyy-clonee.vercel.app/](https://spotifyy-clonee.vercel.app/)
 
-There are several ways of editing your application.
+---
 
-**Use Lovable**
+## ✨ Features
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+### 🔍 1. Smart Music Search Engine
+- **Multi-Tier Search Fallback**: Executes query retries (`<query> official audio` -> `<query>` -> `<query> topic` -> `<query> official`) to ensure accurate results.
+- **5-Level Official Ranking**:
+  1. **Official Audio** (`Official Audio` / Topic Channels)
+  2. **Topic Channels** (`- Topic`)
+  3. **Official Artist Channels / VEVO**
+  4. **Official Music Videos** (`Official Video`, `M/V`)
+  5. **Lyric Videos**
+- **Strict Content Filtering**: Excludes shorts, live recordings, karaoke, covers, remixes, and podcasts unless explicitly searched.
+- **Instant Search Suggestions**: 250ms debounced search with `AbortController` cancellation for stale in-flight requests and query match text highlighting.
+- **High-Reliability Quota Fallback**: Seamlessly falls back to iTunes Music Search API if YouTube API quota limits are hit.
 
-Changes made via Lovable will be committed automatically to this repo.
+### 🎧 2. Dual Playback Engine
+- **YouTube & Direct Audio Support**: Plays YouTube stream audio via YouTube Iframe API and direct audio files via HTML5 Audio element.
+- **Automatic Skip on Error**: Automatically detects unplayable, restricted, or deleted videos (error codes 2, 5, 100, 101, 150) and skips to the next track.
+- **Persistent State**: Saves active track, progress, queue, volume, repeat mode (`Off` / `All` / `One`), and shuffle status in `localStorage` across page refreshes.
+- **Background Preloading**: Pre-fetches metadata for upcoming queue tracks for instant playback transitions.
 
-**Use your preferred IDE**
+### 🎨 3. Spotify Design System
+- **Dark Mode UI**: Crafted with Spotify’s signature dark aesthetic (`#121212`, `#181818`, `#1fdf64` green accents).
+- **Rich Track Metadata**: Verified artist checkmark badges, high-res album thumbnails, formatted durations, view counts, and channel titles.
+- **Interactive Controls**: Bottom Now Playing bar with hover accent progress slider, volume controls, liked songs library, and mobile nav bar.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🚀 Quick Start
 
-Follow these steps:
+### Prerequisites
+- **Node.js** (v18+ recommended)
+- **npm** or **yarn** or **bun**
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Installation
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+```bash
+# 1. Install dependencies
+npm install
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# 2. Start the local development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+---
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 📦 Project Structure
 
-**Use GitHub Codespaces**
+```text
+src/
+├── components/
+│   ├── cards/          # TrackCard, PlaylistCard, CategoryCard, RecentPlayCard
+│   ├── layout/         # Header, Sidebar, NowPlayingBar, MobileNav, MainLayout
+│   └── ui/             # HighlightText, Skeleton, Slider, DropdownMenu, etc.
+├── contexts/
+│   ├── playerContextCore.ts # Player state definitions & usePlayer hook
+│   ├── PlayerContext.tsx    # Audio/YouTube playback provider engine
+│   └── AuthContext.tsx      # User session management
+├── pages/              # Home, Search, Library, LikedSongs, NowPlaying, Settings
+├── services/           # youtubeApi.ts (Search, ranking, fallback & caching)
+└── lib/                # Utility helpers & color generators
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+---
 
-## What technologies are used for this project?
+## 🌐 Deployment on Vercel
 
-This project is built with:
+This repository includes a `vercel.json` configuration file with single-page application (SPA) rewrite rules to prevent 404 Not Found errors on sub-routes (`/search`, `/library`, etc.) when deployed to Vercel:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```json
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+```
 
-## How can I deploy this project?
+---
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## 📜 License
 
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+This project is open-source under the MIT License.
